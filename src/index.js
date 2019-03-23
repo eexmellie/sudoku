@@ -1,12 +1,12 @@
 module.exports = function solveSudoku(matrix) {
   const emptyCells = findEmptyCells(matrix);
-  return makeSuggestion(matrix, emptyCells);
+  const sudoku = matrix.map(r => [...r]);
+  return findSolution(sudoku, emptyCells);
 }
 
 const possibleDigits = Array.from(
   new Array(9), (val, index) => index + 1
 );
-let solution = [];
 
 function findEmptyCells(matrix) {
   let cellsCollection = [];
@@ -36,47 +36,37 @@ function findPossibleCandidates(matrix, cell) {
       possibleCandidates.delete(matrix[areaRowStart + i][areaColStart + j]);
     }
   }
-
+  
   return Array.from(possibleCandidates);
-
 }
 
 function cleanPreviousSuggestions(matrix, cellsToClean) {
   cellsToClean.forEach((cell) => matrix[cell.row][cell.col] = 0);
 }
 
-function makeSuggestion(matrix, emptyCells) {
-  const cell = emptyCells[0];
+function findSolution(matrix, emptyCells) {
+  if (!emptyCells.length) {
+    return isSolved(matrix) ? matrix : false;
+  }
+
+  let cell = emptyCells[0];
   cleanPreviousSuggestions(matrix, emptyCells);
   const candidates = findPossibleCandidates(matrix, cell);
-  if (candidates.length === 0) {
-    return false;
-  }
-  for (let j = 0; j < candidates.length; j++) {
 
-    // if(cell.row == 8 && cell.col == 8) debugger;
-
-    const candidate = candidates[j];
+  for (var i = 0; i < candidates.length; i++) {
+    let candidate = candidates[i];
     matrix[cell.row][cell.col] = candidate;
-    if (emptyCells.length === 1 && isSolved(matrix)) {
-      solution = matrix.map(r => [...r]);
-      return matrix;
-    } else if(emptyCells.length === 1) {
-      return false;
-    } else {
-      makeSuggestion(matrix, emptyCells.slice(1));
-    }
-
+    let result = findSolution(matrix, emptyCells.slice(1));
+    if(result) return result;
   }
-  return solution;
+
+  return false;
 }
 
 function isSolved(sudoku) {
 
   for (let i = 0; i < 9; i++) {
-
     if (sudoku[i].indexOf(0) > -1) return false
-
     const [r,c] = [Math.floor(i/3)*3,(i%3)*3];
 
     if (
@@ -85,5 +75,5 @@ function isSolved(sudoku) {
       (sudoku.slice(r,r+3).reduce((s,v)=>v.slice(c,c+3).reduce((s,v)=>s.add(v),s),new Set()).size != 9)
       ) return false;
   }
-return true;
+  return true;
 }
